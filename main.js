@@ -9,47 +9,51 @@ function goToCards() {
   cardsContainer.innerHTML = "";
   selectedCards = [];
 
-  // Cartas normales (1-12)
+  // Cartas de Jugadores (1-12)
   for (let i = 1; i <= 12; i++) {
     let card = document.createElement("div");
     card.classList.add("card");
     card.innerHTML = `<img src="${i}.png" alt="card ${i}">`;
-    card.onclick = () => toggleSelect(card, `card${i}`);
+    card.onclick = () => toggleSelect(card, { type: 'player', id: i });
     cardsContainer.appendChild(card);
   }
 
-  // ✨ Últimas 3 cartas: FC Point → Coin → Gem
+  // ✨ Especiales: FC Points, Coins, Gems
   const specialCards = [
-    { img: "fcpoint.png", amount: 100000 },
-    { img: "coin.png", amount: 100000 },
-    { img: "gem.png", amount: 100000 }
+    { name: "FC Points", img: "fcpoint.png", amount: "100.000" },
+    { name: "Coins", img: "coin.png", amount: "1.000.000" },
+    { name: "Gems", img: "gem.png", amount: "50.000" }
   ];
 
   specialCards.forEach(item => {
     let card = document.createElement("div");
-    card.classList.add("card");
+    card.classList.add("card", "special-card");
     card.innerHTML = `
-      <img src="${item.img}" alt="special">
-      <div style="color:white;font-size:18px;margin-top:6px;">${item.amount} Coins</div>
+      <img src="${item.img}" alt="${item.name}">
+      <div class="card-label">${item.amount} <br> <span>${item.name}</span></div>
     `;
-    // 👉 Guardar también la imagen
-    card.onclick = () => toggleSelect(card, `${item.amount} Coins|${item.img}`);
+    card.onclick = () => toggleSelect(card, { type: 'resource', name: item.name, img: item.img, amount: item.amount });
     cardsContainer.appendChild(card);
   });
 }
 
-// Selección múltiple
-function toggleSelect(card, cardName) {
-  if (card.classList.contains("selected")) {
-    card.classList.remove("selected");
-    selectedCards = selectedCards.filter(c => c !== cardName);
+// Selección múltiple mejorada
+function toggleSelect(cardElement, cardData) {
+  const index = selectedCards.findIndex(c => 
+    (c.type === 'player' && c.id === cardData.id) || 
+    (c.type === 'resource' && c.name === cardData.name)
+  );
+
+  if (index > -1) {
+    cardElement.classList.remove("selected");
+    selectedCards.splice(index, 1);
   } else {
-    card.classList.add("selected");
-    selectedCards.push(cardName);
+    cardElement.classList.add("selected");
+    selectedCards.push(cardData);
   }
 }
 
-// Ir a sección 3
+// Ir a sección 3 (Búsqueda)
 function goToSearching() {
   if (selectedCards.length === 0) {
     alert("Please select at least one card.");
@@ -59,70 +63,56 @@ function goToSearching() {
   document.getElementById("section2").classList.remove("active");
   document.getElementById("section3").classList.add("active");
 
-  const playerID = document.getElementById("playerID").value;
-  document.getElementById("searchingPlayer").innerText = "ID: " + playerID;
+  const playerID = document.getElementById("playerID").value || "GUEST_USER";
+  document.getElementById("searchingPlayer").innerText = "Connecting to UID: " + playerID;
 
   let dots = 0;
   const loadingText = document.getElementById("loadingText");
   const interval = setInterval(() => {
     dots = (dots + 1) % 4;
-    loadingText.innerText = "Loading" + ".".repeat(dots);
+    loadingText.innerText = "Injecting Rewards" + ".".repeat(dots);
   }, 400);
 
   setTimeout(() => {
     clearInterval(interval);
-    document.getElementById("section3").classList.remove("active");
-    document.getElementById("section4").classList.add("active");
-
-    const finalCards = document.getElementById("finalCards");
-    finalCards.innerHTML = "";
-
-    selectedCards.forEach(c => {
-      let cardDiv = document.createElement("div");
-      cardDiv.classList.add("card", "selected");
-
-      if (c.includes("Coins")) {
-
-        // 👉 Leer texto e imagen guardados
-        const [amountText, imgName] = c.split("|");
-
-        cardDiv.innerHTML = `
-          <img src="${imgName}" alt="reward">
-          <div style="color:white;font-size:18px;margin-top:6px;">${amountText}</div>
-        `;
-      } else {
-        let num = c.replace("card", "");
-        cardDiv.innerHTML = `<img src="${num}.png" alt="${c}">`;
-      }
-      finalCards.appendChild(cardDiv);
-    });
-
-    launchConfetti();
-  }, 1500);
+    showFinalResults();
+  }, 3000);
 }
 
-// Reinicio
+// Sección Final
+function showFinalResults() {
+  document.getElementById("section3").classList.remove("active");
+  document.getElementById("section4").classList.add("active");
+
+  const finalCards = document.getElementById("finalCards");
+  finalCards.innerHTML = "";
+
+  selectedCards.forEach(c => {
+    let cardDiv = document.createElement("div");
+    cardDiv.classList.add("card", "selected", "reveal-animation");
+
+    if (c.type === 'resource') {
+      cardDiv.innerHTML = `
+        <img src="${c.img}" alt="reward">
+        <div class="card-label">${c.amount} <br> <span>${c.name}</span></div>
+      `;
+    } else {
+      cardDiv.innerHTML = `<img src="${c.id}.png" alt="player">`;
+    }
+    finalCards.appendChild(cardDiv);
+  });
+
+  launchConfetti();
+}
+
 function restart() {
   document.getElementById("section4").classList.remove("active");
   document.getElementById("section1").classList.add("active");
   document.getElementById("playerID").value = "";
+  selectedCards = [];
 }
 
 // 🎉 Confetti
 function launchConfetti() {
-  const duration = 2000;
-  const animationEnd = Date.now() + duration;
-  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
-
-  function randomInRange(min, max) {
-    return Math.random() * (max - min) + min;
-  }
-
-  const interval = setInterval(function() {
-    const timeLeft = animationEnd - Date.now();
-    if (timeLeft <= 0) return clearInterval(interval);
-    const particleCount = 50 * (timeLeft / duration);
-    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-  }, 250);
+  confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ffd600', '#00ff9c', '#ffffff'] });
 }
