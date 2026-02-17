@@ -11,24 +11,25 @@
   --yellow-main: #ffd600;
   --neon-green: #00ff9c;
   --deep-dark: #0a0a0a;
-  --glass-bg: rgba(0, 0, 0, 0.8);
-  --border-glow: rgba(57, 255, 20, 0.4);
+  --glass-bg: rgba(0, 0, 0, 0.85);
+  --card-bg: #151515;
 }
 
 body {
   font-family: 'Russo One', sans-serif;
-  background: url("fondo.jpg") center/cover no-repeat fixed;
+  background: #000 url("fondo.jpg") center/cover no-repeat fixed;
   color: white;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden; /* Evita scroll doble si el contenedor es pequeño */
 }
 
 .background-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+  background: radial-gradient(circle, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.9) 100%);
   z-index: -1;
 }
 
@@ -39,20 +40,22 @@ body {
   width: 100%;
   max-width: 450px;
   padding: 20px;
+  z-index: 1;
 }
 
 .content-box {
   background: var(--glass-bg);
-  backdrop-filter: blur(15px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 30px;
   padding: 30px;
   text-align: center;
   border: 2px solid var(--yellow-main);
-  box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,214,0,0.1);
+  box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,214,0,0.1);
 }
 
 /* =========================
-   SECTIONS
+   SECTIONS & ANIMATIONS
 ========================= */
 .section {
   display: none;
@@ -64,7 +67,7 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(50px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -72,7 +75,7 @@ body {
    ELEMENTS
 ========================= */
 .logo {
-  width: 80%;
+  width: 75%;
   margin-bottom: 20px;
   filter: drop-shadow(0 0 15px var(--yellow-main));
 }
@@ -104,10 +107,11 @@ button {
   border-radius: 15px;
   font-family: inherit;
   font-size: 1.2rem;
+  color: #000;
   text-transform: uppercase;
   cursor: pointer;
   box-shadow: 0 10px 20px rgba(255, 214, 0, 0.3);
-  transition: 0.2s;
+  transition: 0.3s;
 }
 
 button:hover {
@@ -116,58 +120,95 @@ button:hover {
 }
 
 /* =========================
-   CARDS GRID
+   CARDS GRID (CENTRADOS)
 ========================= */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin: 20px 0;
-  max-height: 400px;
+  max-height: 380px;
   overflow-y: auto;
   padding: 10px;
+  /* Estilo del Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--yellow-main) transparent;
+}
+
+.cards-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.cards-grid::-webkit-scrollbar-thumb {
+  background: var(--yellow-main);
+  border-radius: 10px;
 }
 
 .card {
-  background: #1a1a1a;
+  background: var(--card-bg);
   border-radius: 12px;
-  padding: 5px;
+  padding: 12px;
   border: 2px solid transparent;
-  transition: 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  cursor: pointer;
+  
+  /* ESTO CENTRA TODO EL CONTENIDO INTERNO */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .card img {
   width: 100%;
+  max-width: 70px;
+  height: auto;
   display: block;
   border-radius: 8px;
+  margin-bottom: 8px;
+  filter: grayscale(40%);
+  transition: 0.3s;
 }
 
 .card-label {
   font-size: 10px;
-  margin-top: 5px;
-  color: #fff;
+  color: #bbb;
   line-height: 1.2;
 }
 
 .card-label span {
   color: var(--neon-green);
   font-weight: bold;
+  display: block;
+  margin-top: 2px;
 }
 
+/* =========================
+   ESTADO SELECCIONADO
+========================= */
 .card:hover {
-  border-color: var(--yellow-main);
-  transform: translateY(-5px);
+  border-color: rgba(255, 214, 0, 0.4);
 }
 
 .card.selected {
   border-color: var(--neon-green);
   background: rgba(0, 255, 156, 0.1);
-  box-shadow: 0 0 15px var(--neon-green);
+  box-shadow: 0 0 20px rgba(0, 255, 156, 0.4);
+  transform: scale(1.05); /* Centra y agranda visualmente */
+  z-index: 5;
+}
+
+.card.selected img {
+  filter: grayscale(0%) drop-shadow(0 0 5px var(--neon-green));
+}
+
+.card.selected .card-label {
+  color: #fff;
 }
 
 /* =========================
-   UI EXTRAS
+   UI EXTRAS (SPINNERS)
 ========================= */
 .spinner {
   width: 60px;
@@ -181,13 +222,4 @@ button:hover {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.reveal-animation {
-  animation: popIn 0.5s backwards;
-}
-
-@keyframes popIn {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
 }
